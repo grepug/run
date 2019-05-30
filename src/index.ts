@@ -11,8 +11,7 @@ async function run() {
         const packages = recursiveFindPackageJsonName(lernaFilePath);
         const anwser: any = await inquirer.prompt({
             type: 'list',
-            name: '1. 请选择你要进入的项目：',
-            message: 'select',
+            name: '1. 请选择你要进入的项目',
             choices: packages.map((el, i) => ({ name: el.name, value: i })),
         });
         const index = getValue(anwser);
@@ -20,7 +19,7 @@ async function run() {
         const scripts = getNpmScripts(path.resolve(el.path, 'package.json'));
         const anwser2 = await inquirer.prompt({
             type: 'list',
-            name: '2. 请选择要执行的 script: ',
+            name: '2. 请选择要执行的 script',
             choices: [{ name: 'RUN_CUSTOM_SCRIPT', value: 'custom' }].concat(
                 scripts.map((el, i) => ({ name: el.name, value: String(i) })),
             ),
@@ -35,7 +34,6 @@ async function run() {
                     name: '请输入自定义命令',
                 });
                 const commArr = (getValue(customScript) as string).split(/\s+/);
-
                 runCommand(commArr[0], commArr.slice(1), el.path);
             }
         } else {
@@ -53,7 +51,6 @@ function runCommand(comm: string, args: string[], cwd: string) {
         stdout
             .on('data', data => console.log(data.toString()))
             .on('error', err => console.error(err.toString()));
-    // .on('close', () => console.log('finished!'));
 }
 
 function recursiveFindLernaJson(curPath: string): string | null {
@@ -78,9 +75,11 @@ function recursiveFindPackageJsonName(
     const packageJsonPath = path.resolve(findPath, 'package.json');
     const isPackageJsonPath = fs.existsSync(packageJsonPath);
     const isNotLernaRoot = !fs.existsSync(path.resolve(findPath, 'lerna.json'));
-    if (isPackageJsonPath && isNotLernaRoot) {
+    if (isPackageJsonPath) {
         res.push({
-            name: require(packageJsonPath).name,
+            name: isNotLernaRoot
+                ? require(packageJsonPath).name
+                : 'PROJECT ROOT',
             path: findPath,
         });
     }
