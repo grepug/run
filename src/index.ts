@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { saveHistory, getHistory } from './history';
 
 run();
 
@@ -9,12 +10,40 @@ async function run() {
     const lernaFilePath = recursiveFindLernaJson(process.cwd());
     if (lernaFilePath) {
         const packages = recursiveFindPackageJsonName(lernaFilePath);
+        const history = getHistory(lernaFilePath);
+        const choices = packages.map((el, i) => ({
+            name: el.name,
+            value: String(i),
+        }));
+        if (history.length) {
+            choices.unshift({
+                name: 'HISTORY',
+                value: 'history',
+            });
+        }
         const anwser: any = await inquirer.prompt({
             type: 'list',
             name: '1. 请选择你要进入的项目',
-            choices: packages.map((el, i) => ({ name: el.name, value: i })),
+            choices,
         });
         const index = getValue(anwser);
+
+        // 历史
+        if (index === 'history') {
+            const anwser3 = await inquirer.prompt({
+                type: 'list',
+                name: '3. 请选择历史命令',
+                choices: history.map((el, i) => ({
+                    name: path.basename(el.path) + ' | ' + el.command,
+                    value: String(i),
+                })),
+            });
+            const index3 = getValue(anwser3);
+            const el = history[index3 as number];
+            const [comm, ...args] = el.command.split(/\s+/);
+            runCommand(comm, args, el.path, lernaFilePath);
+            return;
+        }
         const el = packages[index as number];
         const scripts = getNpmScripts(path.resolve(el.path, 'package.json'));
         const anwser2 = await inquirer.prompt({
@@ -34,18 +63,29 @@ async function run() {
                     name: '请输入自定义命令',
                 });
                 const commArr = (getValue(customScript) as string).split(/\s+/);
-                runCommand(commArr[0], commArr.slice(1), el.path);
+                runCommand(
+                    commArr[0],
+                    commArr.slice(1),
+                    el.path,
+                    lernaFilePath,
+                );
             }
         } else {
             const scriptName = scripts[index2 as number].name;
-            runCommand('npm', ['run', scriptName], el.path);
+            runCommand('npm', ['run', scriptName], el.path, lernaFilePath);
         }
     } else {
         console.log('未找到 lerna 项目');
     }
 }
 
-function runCommand(comm: string, args: string[], cwd: string) {
+function runCommand(
+    comm: string,
+    args: string[],
+    cwd: string,
+    rootPath: string,
+) {
+    saveHistory(`${comm} ${args.join(' ')}`, rootPath, cwd);
     const stdout = spawn(comm, args, { cwd, stdio: 'inherit' });
     stdout &&
         stdout
