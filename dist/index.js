@@ -75,7 +75,7 @@ function run() {
                     if (!(index === 'history')) return [3 /*break*/, 3];
                     return [4 /*yield*/, inquirer_1.default.prompt({
                             type: 'list',
-                            name: '3. 请选择历史命令',
+                            name: '2. 请选择历史命令',
                             choices: history_2.map(function (el, i) { return ({
                                 name: path_1.default.basename(el.path) + ' | ' + el.command,
                                 value: String(i),

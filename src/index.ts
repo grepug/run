@@ -32,7 +32,7 @@ async function run() {
         if (index === 'history') {
             const anwser3 = await inquirer.prompt({
                 type: 'list',
-                name: '3. 请选择历史命令',
+                name: '2. 请选择历史命令',
                 choices: history.map((el, i) => ({
                     name: path.basename(el.path) + ' | ' + el.command,
                     value: String(i),
